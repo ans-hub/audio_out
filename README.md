@@ -1,6 +1,6 @@
 # Audio out
 
-This class is wrapper to [BASS audio library](https://www.un4seen.com) with some often requested functions, such as:
+This class is c++ wrapper to [BASS audio library](https://www.un4seen.com) with some often requested functions, such as:
 * load sound in memory and play it when needs;
 * manage loaded sounds;
 * repeat playing of song;
@@ -18,18 +18,18 @@ clang++ -L libdir -lbass
 
 # Usage example:
 
-** Playing looped sound: 
+### Playing looped sound: 
 ```c++
   AudioOut audio;
   audio.Play("some_song.wav", true);
 ```
 
-** Stop looped sound:
+### Stop looped sound:
 ```c++
   audio.Stop("some_song.wav"); 
 ```
 
-** To know now playing repeated sound:
+### To know now playing repeated sound:
 ```c++
   std::vector<std::string> audio.NowPlaying(true);
 ```
