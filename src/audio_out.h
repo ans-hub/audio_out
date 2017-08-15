@@ -1,4 +1,4 @@
-// Package: bass_wrapper(v0.2)
+// Package: bass_wrapper(v0.22)
 // Description: https://github.com/ans-hub/bass_wrapper
 // Author: Anton Novoselov, 2017
 // File: class that represents wrapper to BASS audio library
@@ -17,7 +17,6 @@ namespace wumpus_game {
 class AudioOut
 {
 public:
-
   using Handle    = HSAMPLE;
   using FileName  = std::string;
   using VHandles  = std::vector<Handle>;
@@ -33,7 +32,6 @@ public:
   VStrings  NowPlaying(bool only_repeated) const;
 
 private:
-
   bool      inited_;    // flag to show is bass lib is inited
   VSounds   loaded_;    // currently loaded samples in memory 
   
@@ -41,8 +39,14 @@ private:
   bool      IsRepeatedSample(const Handle&) const;
   VHandles  GetLoadedChannels(const Handle&) const;
   bool      IsChannelsPlayingNow(const VHandles&) const;
-  
 };
+
+namespace audio_helpers {
+
+  bool StopAllNowPlaying(AudioOut&, bool only_repeated);
+  bool IsNowPlaying(const AudioOut&, const AudioOut::FileName&);
+
+}  // namespace audio_helpers
 
 }  // namespace wumpus_game
 

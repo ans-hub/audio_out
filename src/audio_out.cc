@@ -1,4 +1,4 @@
-// Package: bass_wrapper(v0.2)
+// Package: bass_wrapper(v0.22)
 // Description: https://github.com/ans-hub/bass_wrapper
 // Author: Anton Novoselov, 2017
 // File: class that represents wrapper to BASS audio library
@@ -133,6 +133,29 @@ bool AudioOut::IsChannelsPlayingNow(const VHandles& handles) const
   for (const auto& h : handles) {
     auto active = BASS_ChannelIsActive(h);
     if (active) return true;
+  }
+  return false;
+}
+
+// HELPERS
+
+bool audio_helpers::StopAllNowPlaying(AudioOut& audio, bool only_repeated)
+{
+  bool result{true};
+  auto sounds = audio.NowPlaying(only_repeated);
+  
+  for (const auto& sound : sounds) {
+    if (!audio.Stop(sound)) result = false;
+  }
+  return result;
+}
+
+bool audio_helpers::IsNowPlaying(const AudioOut& audio, const std::string& fname)
+{
+  auto now_playing = audio.NowPlaying(false);
+
+  for (const auto& sound : now_playing) {
+    if (sound == fname) return true;
   }
   return false;
 }

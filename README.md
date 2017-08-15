@@ -29,6 +29,13 @@ clang++ -L libdir -lbass
   audio.Stop("some_song.wav"); 
 ```
 
+### Stop all now-playing sounds:
+```c++
+  AudioOut& audio;
+  ...
+  audio_helpers::StopAllNowPlayingSong(audio, true);
+```
+
 ### To know now playing repeated sound:
 ```c++
   std::vector<std::string> audio.NowPlaying(true);
