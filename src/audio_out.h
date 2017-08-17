@@ -1,4 +1,4 @@
-// Package: bass_wrapper(v0.24)
+// Package: bass_wrapper(v0.25)
 // Description: https://github.com/ans-hub/audio_out
 // Author: Anton Novoselov, 2017
 // File: class that represents wrapper to BASS audio library
