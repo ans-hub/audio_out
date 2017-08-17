@@ -80,8 +80,15 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
 AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
 {
   Handle hndl = FindLoaded(fname);
+
   if (!hndl) {
-    hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, repeat ? 4 : 1 );
+    DWORD flags;
+    if (repeat) 
+      flags = BASS_SAMPLE_LOOP;
+    else
+      flags = BASS_SAMPLE_8BITS + BASS_SAMPLE_OVER_POS;
+
+    hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, flags);
     loaded_.push_back(std::make_pair(fname, hndl));
   }
   return hndl;
