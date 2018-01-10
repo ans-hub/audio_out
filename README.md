@@ -9,12 +9,14 @@ This class is c++ wrapper to [BASS audio library](https://www.un4seen.com) with 
 
 1. Download BASS audio library from [this site](https://www.un4seen.com)
 2. Place dynamic library (usually named `libbass.so`) and header file (usually named `bass.h`) in the library directory of yours application.
-3. Say to compiler where its would to search a libraries and connect the library `libbass.so`:
-```make
-clang++ -L libdir -lbass
-```
-4. If the directory path mentioned above would be equal to a directory path where placed this class AudioOut this would be perfect, since you do not needs to make changes in class `AudioOut`
-5. In header file of yours application You should include `audio_out.h` and use it.
+
+```bash
+  $ sudo cp libbass.so /usr/local/lib/
+  $ sudo chmod a+rx /usr/local/lib/libbass.so 
+  $sudo ldconfig
+
+3. If the directory path mentioned above would be equal to a directory path where placed this class AudioOut this would be perfect, since you do not needs to make changes in class `AudioOut`
+4. In header file of yours application You should include `audio_out.h` and use it.
 
 # Usage example:
 
