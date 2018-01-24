@@ -1,7 +1,11 @@
-// Package: bass_wrapper (v0.25)
-// Description: https://github.com/ans-hub/audio_out
-// Author: Anton Novoselov, 2017
-// File: class that represents wrapper to BASS audio library
+// *************************************************************
+// File:    audio_out.h
+// Descr:   wrapper to BASS audio library
+// Author:  Novoselov Anton @ 2017-2018
+// URL:     https://github.com/ans-hub/audio_out
+// *************************************************************
+
+// BASS Library docs placed here: https://www.un4seen.com/doc/
 
 #include "audio_out.h"
 
@@ -10,15 +14,20 @@ namespace anshub {
 AudioOut::AudioOut()
   : inited_{false}
   , loaded_{ }
+  , channels_cnt_{audio_helpers::kChannelsCount}
 {
   if (BASS_Init(-1, 44100, BASS_DEVICE_DEFAULT, 0, 0))
     inited_ = true;
+  else
+    audio_helpers::PrintBassError();
 }
 
 AudioOut::~AudioOut()
 {
-  for (auto& a : loaded_) BASS_SampleFree(a.second);
-  if (!inited_) BASS_Free();
+  for (auto& a : loaded_)
+    BASS_SampleFree(a.second);
+  if (!inited_)
+    BASS_Free();
 }
 
 // Plays the sample (with loading its before)
@@ -26,14 +35,16 @@ AudioOut::~AudioOut()
 bool AudioOut::Play(const std::string& fname, bool repeat)
 {
   Handle hndl = Load(fname, repeat);
-  if (!hndl) return false;
+  if (!hndl)
+    return audio_helpers::PrintBassError();  
 
   hndl = BASS_SampleGetChannel(hndl, FALSE);
   BASS_ChannelSetAttribute(hndl, BASS_ATTRIB_VOL,0.5f);
 
   if (BASS_ChannelPlay(hndl, FALSE)) 
     return true;
-  return false;
+  else
+    return audio_helpers::PrintBassError();
 }
 
 // Stops playing the sample in two ways - by immediately and by
@@ -43,8 +54,8 @@ bool AudioOut::Stop(const std::string& fname, bool immediately)
 {
   Handle hndl = FindLoaded(fname);
   
-  if (!hndl) 
-    return false;
+  if (!hndl)
+    return audio_helpers::PrintBassError();
 
   if (immediately)
     return StopPlayingImmediately(hndl);
@@ -58,8 +69,8 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
 {
   VStrings res{};
   
-  for (const auto& l : loaded_) {
-
+  for (const auto& l : loaded_)
+  {
     auto sample_hndl = l.second;
     auto channels_hndls = GetLoadedChannels(sample_hndl);
     
@@ -73,7 +84,7 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
   return res;
 }
 
-// REALISATION DETAILS
+// IMPLEMENTATION DETAILS
 
 // Loads sample by filename, saves to loaded_ vector and return its handle
 
@@ -91,6 +102,9 @@ AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
     hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, flags);
     loaded_.push_back(std::make_pair(fname, hndl));
   }
+  if (!hndl)
+    audio_helpers::PrintBassError();
+
   return hndl;
 }
 
@@ -98,9 +112,8 @@ AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
 
 AudioOut::Handle AudioOut::FindLoaded(const std::string& fname) const
 {
-  for (auto& l:loaded_) {
+  for (auto& l:loaded_)
     if (l.first == fname) return l.second;
-  }
   return 0;
 }
 
@@ -108,7 +121,6 @@ AudioOut::Handle AudioOut::FindLoaded(const std::string& fname) const
 
 AudioOut::VHandles AudioOut::GetLoadedChannels(const Handle& hndl) const
 {
-  
   // Create struct to save channels list
   
   auto  nfo = audio_helpers::GetSampleInfo(hndl);
@@ -126,7 +138,6 @@ AudioOut::VHandles AudioOut::GetLoadedChannels(const Handle& hndl) const
   for (DWORD i = 0; i < ch_count; ++i) {
     res.push_back(ch_list[i]);
   }
-
   return res;
 }
 
@@ -154,7 +165,8 @@ bool AudioOut::StopPlayingImmediately(const Handle& hndl)
 
 bool AudioOut::RemoveLoopFromSample(const Handle& hndl)
 {
-  if (!audio_helpers::IsRepeatedSample(hndl))
+  if (!audio_helpers::IsRepeatedSample(hndl)) 
+    // return StopPlayingImmediately(hndl);
     return false;
   
   auto channels_hndls = GetLoadedChannels(hndl);
@@ -164,7 +176,6 @@ bool AudioOut::RemoveLoopFromSample(const Handle& hndl)
       return true;
     }
   }
-
   return false;
 }
 
@@ -214,4 +225,16 @@ bool audio_helpers::SetSampleInfo(const Handle& hndl, SampleNfo& nfo)
   return BASS_SampleSetInfo(hndl, &nfo);
 }
 
-}  // namespace anshub
+bool audio_helpers::PrintBassError()
+{
+  auto err = BASS_ErrorGetCode();
+
+#ifdef DEBUG
+  std::cerr << "Audio module: libbass.so error code: " << err << '\n'
+    << "  More at: http://www.un4seen.com/doc/#bass/BASS_ErrorGetCode.html" << '\n';
+#endif
+
+  return err ? false : true; 
+}
+
+}  // namespace anshuv

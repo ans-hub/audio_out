@@ -1,12 +1,15 @@
-# Builds static library libAudio.a
+# Builds static library libaudio.a
 
-LIBNAME = libAudio.a
-SRCFILES = $(wildcard *.cc)
+LIBNAME = libaudio.a
 SRCDIR = ./
+SRCFILES = $(wildcard *.cc)
+
+# Compiler settings
+
 CXX = g++
 CXXFLAGS = -I $(SRCDIR) -ansi -pedantic -Wall -Wextra -std=c++14 
 CXXFLAGS += -MP -MMD
-DBGFLAGS = -ggdb3 -DDEBUG -O0
+DBGFLAGS = -ggdb3 -DDEBUG -O0 -pg -no-pie
 RLSFLAGS = -O2
 
 ##############################################################################

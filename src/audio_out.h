@@ -1,13 +1,16 @@
-// Package: bass_wrapper(v0.25)
-// Description: https://github.com/ans-hub/audio_out
-// Author: Anton Novoselov, 2017
-// File: class that represents wrapper to BASS audio library
+// *************************************************************
+// File:    audio_out.h
+// Descr:   wrapper to BASS audio library
+// Author:  Novoselov Anton @ 2017-2018
+// URL:     https://github.com/ans-hub/audio_out
+// *************************************************************
 
 // BASS Library docs placed here: https://www.un4seen.com/doc/
 
 #ifndef AUDIO_OUT_H
 #define AUDIO_OUT_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
@@ -35,18 +38,22 @@ public:
   VStrings  NowPlaying(bool only_repeated) const;
   
 private:
-  bool      inited_;    // flag to show is bass lib is inited
-  VSounds   loaded_;    // currently loaded samples in memory 
+  bool      inited_;        // flag to show is bass lib is inited
+  VSounds   loaded_;        // currently loaded samples in memory
+  int       channels_cnt_;  // sounds of sample playing at the same time
   
   Handle    FindLoaded(const FileName&) const;
   VHandles  GetLoadedChannels(const Handle&) const;
   bool      IsChannelsPlayingNow(const VHandles&) const;     
   bool      StopPlayingImmediately(const Handle&);
   bool      RemoveLoopFromSample(const Handle&);
-};
+
+}; // class AudioOut
 
 namespace audio_helpers {
   
+  constexpr int kChannelsCount = 5;   // default val for channels_cnt_;
+
   using FileName = AudioOut::FileName; 
   using SampleNfo = AudioOut::SampleNfo;
   using Handle = AudioOut::Handle;
@@ -57,6 +64,7 @@ namespace audio_helpers {
   bool      IsRepeatedSample(const Handle&);
   SampleNfo GetSampleInfo(const Handle&);
   bool      SetSampleInfo(const Handle&, SampleNfo&);
+  bool      PrintBassError();
 
 }  // namespace audio_helpers
 
