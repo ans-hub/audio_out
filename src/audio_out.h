@@ -1,6 +1,6 @@
 // *************************************************************
 // File:    audio_out.h
-// Descr:   wrapper to BASS audio library
+// Descr:   wrapper to BASS audio library (v0.41)
 // Author:  Novoselov Anton @ 2017-2018
 // URL:     https://github.com/ans-hub/audio_out
 // *************************************************************
@@ -27,10 +27,11 @@ public:
   using FileName  = std::string;
   using VHandles  = std::vector<Handle>;
   using VSounds   = std::vector<std::pair<FileName, Handle>>;
-  using VStrings  = std::vector<std::string>;
+  using String    = std::string;  
+  using VStrings  = std::vector<String>;
 
   AudioOut();
-  ~AudioOut();
+  virtual ~AudioOut();
 
   bool      Play(const FileName&, bool repeat = false);
   bool      Stop(const FileName&, bool immediately = true);
@@ -64,7 +65,8 @@ namespace audio_helpers {
   bool      IsRepeatedSample(const Handle&);
   SampleNfo GetSampleInfo(const Handle&);
   bool      SetSampleInfo(const Handle&, SampleNfo&);
-  bool      PrintBassError();
+  bool      PrintBassError(const std::string& func_name = "unnamed");
+  bool      PrintGeneralError(const std::string& msg);
 
 }  // namespace audio_helpers
 

@@ -1,9 +1,9 @@
-// *************************************************************
+// ******************************************************************
 // File:    audio_out.h
-// Descr:   wrapper to BASS audio library
+// Descr:   wrapper to BASS audio library (v0.41)
 // Author:  Novoselov Anton @ 2017-2018
 // URL:     https://github.com/ans-hub/audio_out
-// *************************************************************
+// ******************************************************************
 
 // BASS Library docs placed here: https://www.un4seen.com/doc/
 
@@ -16,17 +16,17 @@ AudioOut::AudioOut()
   , loaded_{ }
   , channels_cnt_{audio_helpers::kChannelsCount}
 {
-  if (BASS_Init(-1, 44100, BASS_DEVICE_DEFAULT, 0, 0))
+  if (BASS_Init(1, 44100, BASS_DEVICE_8BITS, 0, NULL))
     inited_ = true;
   else
-    audio_helpers::PrintBassError();
+    audio_helpers::PrintBassError("Bass_Init");
 }
 
 AudioOut::~AudioOut()
 {
   for (auto& a : loaded_)
     BASS_SampleFree(a.second);
-  if (!inited_)
+  if (inited_)
     BASS_Free();
 }
 
@@ -34,17 +34,26 @@ AudioOut::~AudioOut()
 
 bool AudioOut::Play(const std::string& fname, bool repeat)
 {
-  Handle hndl = Load(fname, repeat);
-  if (!hndl)
-    return audio_helpers::PrintBassError();  
+  // Try to load stream (may be loaded already)
+  
+  Handle hndl = FindLoaded(fname);
+
+  if (!hndl && !(hndl = Load(fname, repeat)))
+    return false;
+
+  // Try to get channel
 
   hndl = BASS_SampleGetChannel(hndl, FALSE);
+  if (!hndl)
+    return audio_helpers::PrintBassError("BASS_SampleGetChannel");
   BASS_ChannelSetAttribute(hndl, BASS_ATTRIB_VOL,0.5f);
+
+  // Try to play channel
 
   if (BASS_ChannelPlay(hndl, FALSE)) 
     return true;
   else
-    return audio_helpers::PrintBassError();
+    return audio_helpers::PrintBassError("BASS_ChannelPlay");
 }
 
 // Stops playing the sample in two ways - by immediately and by
@@ -55,7 +64,7 @@ bool AudioOut::Stop(const std::string& fname, bool immediately)
   Handle hndl = FindLoaded(fname);
   
   if (!hndl)
-    return audio_helpers::PrintBassError();
+    return audio_helpers::PrintGeneralError(fname + String(" not loaded"));    
 
   if (immediately)
     return StopPlayingImmediately(hndl);
@@ -84,28 +93,34 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
   return res;
 }
 
-// IMPLEMENTATION DETAILS
-
 // Loads sample by filename, saves to loaded_ vector and return its handle
 
 AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
 {
+  // Check if already loaded
+
   Handle hndl = FindLoaded(fname);
+  if (hndl)
+    return audio_helpers::PrintGeneralError(fname + String(" already loaded"));    
 
-  if (!hndl) {
-    DWORD flags;
-    if (repeat) 
-      flags = BASS_SAMPLE_LOOP;
-    else
-      flags = BASS_SAMPLE_8BITS + BASS_SAMPLE_OVER_POS;
+  // Create new sample
 
-    hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, flags);
-    loaded_.push_back(std::make_pair(fname, hndl));
-  }
+  DWORD flags {};
+  if (repeat) 
+    flags = BASS_SAMPLE_LOOP;
+  else
+    flags = BASS_SAMPLE_8BITS + BASS_SAMPLE_OVER_POS;
+  hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, flags);
+
+  // Add sample to container
+
   if (!hndl)
-    audio_helpers::PrintBassError();
-
-  return hndl;
+    return audio_helpers::PrintBassError("BASS_SampleLoad");
+  else
+  {
+    loaded_.push_back(std::make_pair(fname, hndl));
+    return hndl;
+  }
 }
 
 // Returns handle of sample if its were been loaded early
@@ -225,16 +240,19 @@ bool audio_helpers::SetSampleInfo(const Handle& hndl, SampleNfo& nfo)
   return BASS_SampleSetInfo(hndl, &nfo);
 }
 
-bool audio_helpers::PrintBassError()
+bool audio_helpers::PrintBassError(const std::string& func_name)
 {
   auto err = BASS_ErrorGetCode();
-
-#ifdef DEBUG
-  std::cerr << "Audio module: libbass.so error code: " << err << '\n'
-    << "  More at: http://www.un4seen.com/doc/#bass/BASS_ErrorGetCode.html" << '\n';
-#endif
+  if (err)
+    std::cerr << "Audio error code " << err << " in function " << func_name << '\n';
 
   return err ? false : true; 
 }
 
-}  // namespace anshuv
+bool audio_helpers::PrintGeneralError(const std::string& msg)
+{
+  std::cerr << "Audio error: " << msg << '\n';
+  return false;
+}
+
+}  // namespace anshub
