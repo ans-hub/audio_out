@@ -16,7 +16,7 @@ AudioOut::AudioOut()
   , loaded_{ }
   , channels_cnt_{audio_helpers::kChannelsCount}
 {
-  if (BASS_Init(1, 44100, BASS_DEVICE_8BITS, 0, NULL))
+  if (BASS_Init(-1, 44100, BASS_DEVICE_8BITS, 0, NULL))
     inited_ = true;
   else
     audio_helpers::PrintBassError("Bass_Init");
