@@ -39,9 +39,8 @@ public:
   VStrings  NowPlaying(bool only_repeated) const;
   
 private:
-  bool      inited_;        // flag to show is bass lib is inited
-  VSounds   loaded_;        // currently loaded samples in memory
-  int       channels_cnt_;  // sounds of sample playing at the same time
+  bool      inited_;
+  VSounds   loaded_samples;
   
   Handle    FindLoaded(const FileName&) const;
   VHandles  GetLoadedChannels(const Handle&) const;
@@ -52,8 +51,6 @@ private:
 }; // class AudioOut
 
 namespace audio_helpers {
-  
-  constexpr int kChannelsCount = 5;   // default val for channels_cnt_;
 
   using FileName = AudioOut::FileName; 
   using SampleNfo = AudioOut::SampleNfo;

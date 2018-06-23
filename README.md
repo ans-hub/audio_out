@@ -41,12 +41,7 @@ P.S.: if something goes wrong while downloading bass audio library, then the bes
 
 ### Once creating of instance of class:
 ```c++
-  try {
-    AudioOut audio;
-  }
-  catch (...) {
-    ...
-  }
+    AudioOut audio {};
 ```
 
 ### Playing looped sound: 
@@ -104,7 +99,6 @@ P.S.: if something goes wrong while downloading bass audio library, then the bes
     auto curr_vel = boat.GetDynamics().GetCurrentSpeed();
     auto modifier_val = math::LeadToRange(range_1, range_2, curr_vel);
     audio.SetModifierValue(engine_snd, engine_mod, modifier_val);
-
   ..
   }
 ```

@@ -13,8 +13,7 @@ namespace anshub {
 
 AudioOut::AudioOut()
   : inited_{false}
-  , loaded_{ }
-  , channels_cnt_{audio_helpers::kChannelsCount}
+  , loaded_samples{ }
 {
   if (BASS_Init(-1, 44100, BASS_DEVICE_8BITS, 0, NULL))
     inited_ = true;
@@ -24,7 +23,7 @@ AudioOut::AudioOut()
 
 AudioOut::~AudioOut()
 {
-  for (auto& a : loaded_)
+  for (auto& a : loaded_samples)
     BASS_SampleFree(a.second);
   if (inited_)
     BASS_Free();
@@ -34,21 +33,15 @@ AudioOut::~AudioOut()
 
 bool AudioOut::Play(const std::string& fname, bool repeat)
 {
-  // Try to load stream (may be loaded already)
-  
   Handle hndl = FindLoaded(fname);
 
   if (!hndl && !(hndl = Load(fname, repeat)))
     return false;
 
-  // Try to get channel
-
   hndl = BASS_SampleGetChannel(hndl, FALSE);
   if (!hndl)
     return audio_helpers::PrintBassError("BASS_SampleGetChannel");
   BASS_ChannelSetAttribute(hndl, BASS_ATTRIB_VOL,0.5f);
-
-  // Try to play channel
 
   if (BASS_ChannelPlay(hndl, FALSE)) 
     return true;
@@ -78,7 +71,7 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
 {
   VStrings res{};
   
-  for (const auto& l : loaded_)
+  for (const auto& l : loaded_samples)
   {
     auto sample_hndl = l.second;
     auto channels_hndls = GetLoadedChannels(sample_hndl);
@@ -93,17 +86,13 @@ AudioOut::VStrings AudioOut::NowPlaying(bool only_repeated) const
   return res;
 }
 
-// Loads sample by filename, saves to loaded_ vector and return its handle
+// Loads sample by filename, saves to loaded_samples vector and return its handle
 
 AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
 {
-  // Check if already loaded
-
   Handle hndl = FindLoaded(fname);
   if (hndl)
     return audio_helpers::PrintGeneralError(fname + String(" already loaded"));    
-
-  // Create new sample
 
   DWORD flags {};
   if (repeat) 
@@ -112,13 +101,11 @@ AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
     flags = BASS_SAMPLE_8BITS + BASS_SAMPLE_OVER_POS;
   hndl = BASS_SampleLoad(FALSE, fname.c_str(), 0,0,3, flags);
 
-  // Add sample to container
-
   if (!hndl)
     return audio_helpers::PrintBassError("BASS_SampleLoad");
   else
   {
-    loaded_.push_back(std::make_pair(fname, hndl));
+    loaded_samples.push_back(std::make_pair(fname, hndl));
     return hndl;
   }
 }
@@ -127,7 +114,7 @@ AudioOut::Handle AudioOut::Load(const std::string& fname, bool repeat)
 
 AudioOut::Handle AudioOut::FindLoaded(const std::string& fname) const
 {
-  for (auto& l:loaded_)
+  for (auto& l:loaded_samples)
     if (l.first == fname) return l.second;
   return 0;
 }
@@ -136,18 +123,12 @@ AudioOut::Handle AudioOut::FindLoaded(const std::string& fname) const
 
 AudioOut::VHandles AudioOut::GetLoadedChannels(const Handle& hndl) const
 {
-  // Create struct to save channels list
-  
   auto  nfo = audio_helpers::GetSampleInfo(hndl);
   auto  ch_list_ptr = std::unique_ptr<HCHANNEL>{new HCHANNEL[nfo.max]};
   auto* ch_list = ch_list_ptr.get();
   
-  // Get channels list
-  
   DWORD ch_count {0};
   ch_count  = BASS_SampleGetChannels(hndl, ch_list);
-  
-  // Save channels to vector
   
   VHandles res{};
   for (DWORD i = 0; i < ch_count; ++i) {
@@ -181,7 +162,6 @@ bool AudioOut::StopPlayingImmediately(const Handle& hndl)
 bool AudioOut::RemoveLoopFromSample(const Handle& hndl)
 {
   if (!audio_helpers::IsRepeatedSample(hndl)) 
-    // return StopPlayingImmediately(hndl);
     return false;
   
   auto channels_hndls = GetLoadedChannels(hndl);
@@ -193,8 +173,6 @@ bool AudioOut::RemoveLoopFromSample(const Handle& hndl)
   }
   return false;
 }
-
-// HELPERS
 
 bool audio_helpers::IsNowPlaying(const AudioOut& audio, const std::string& fname)
 {
